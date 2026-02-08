@@ -83,7 +83,7 @@ function App() {
   const toggleSoundMute = () => setIsSoundMute(!isSoundMute);
   const toggleVibration = () => setIsvibrationMute(!isVibrationMute);
 
-  const TOTAL_BEADS = 20;
+  const TOTAL_BEADS = 108;
 
   const moveToNextBead = useCallback(() => {
     if (isScrolling.current) return;
@@ -265,7 +265,7 @@ function App() {
           </span>
           <span className="text-xl font-light text-white leading-none">
             {currentBead + 1}
-            <span className="text-xs opacity-40">/20</span>
+            <span className="text-xs opacity-40">/108</span>
           </span>
         </div>
       </div>
@@ -285,7 +285,7 @@ function App() {
         ref={containerRef}
       >
         <div className="mala-beads-container">
-          {Array.from({ length: 20 }).map((_, index) => (
+          {Array.from({ length: 108 }).map((_, index) => (
             <RudrakshaComponent
               key={index}
               index={index}
@@ -300,7 +300,7 @@ function App() {
       <div className="instructions">
         {currentBead === 0 && malaCount === 0 && "Swipe up to begin your Japa"}
         {currentBead > 0 && "Om Namah Shivaya"}
-        {currentBead === 19 && "Last bead of this mala"}
+        {currentBead === 107 && "Last bead of this mala"}
         {currentBead === 0 && malaCount > 0 && `Mala Complete ×${malaCount} 🙏`}
       </div>
 
