@@ -9,6 +9,7 @@ import Sound from "react-sound";
 import BackgroundAudio from "./components/BackgroundAudio";
 import { FaPlay, FaPause, FaVolumeUp, FaVolumeMute } from "react-icons/fa";
 import { LuVibrate } from "react-icons/lu";
+import InstallPWA from "./components/InstallPWA";
 
 function App() {
   const [currentBead, setCurrentBead] = useState(0);
@@ -220,7 +221,7 @@ function App() {
   return (
     <div className="app-wrapper">
       <BackgroundAudio url="/om.mp3" isPlaying={isBgMusicPlaying} />
-
+      <InstallPWA />
       <div className="fixed top-4 right-4 md:top-8 md:right-8 flex gap-3 z-50">
         {/* BG Music Toggle */}
         <button
