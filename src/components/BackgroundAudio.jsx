@@ -1,20 +1,25 @@
 // components/BackgroundAudio.jsx
 import { useEffect, useRef } from "react";
+import { audioManager } from "../utils/audioManager";
 
 const BackgroundAudio = ({ url, isPlaying }) => {
   const audioRef = useRef(new Audio(url));
 
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
+    
     audio.loop = true;
 
     if (isPlaying) {
-      // Browsers require a user gesture to play.
-      // Since the button click is a gesture, this will work.
-      audio.play().catch((err) => console.log("Audio play blocked:", err));
+      audioManager.play(audio);
     } else {
-      audio.pause();
+      audioManager.stop(audio);
     }
+
+    return () => {
+      audioManager.stop(audio);
+    };
   }, [isPlaying]);
 
   return null;
