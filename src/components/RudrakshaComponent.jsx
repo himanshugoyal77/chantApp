@@ -1,4 +1,18 @@
-const RudrakshaComponent = ({ index, isActive, isMeru }) => {
+import { memo, useEffect } from 'react';
+
+const RudrakshaComponent = memo(({ index, isActive, isMeru }) => {
+  // Preload images on component mount
+  useEffect(() => {
+    const preloadImages = () => {
+      const images = ['/rudraksha.png', '/thread.png'];
+      images.forEach(src => {
+        const img = new Image();
+        img.src = src;
+      });
+    };
+    preloadImages();
+  }, []);
+
   return (
     <div 
       className={`
@@ -15,6 +29,7 @@ const RudrakshaComponent = ({ index, isActive, isMeru }) => {
       <img
         src="/thread.png"
         alt="thread"
+        loading="lazy"
         className="w-12 h-4 absolute top-0 -z-10"
       />
       
@@ -22,6 +37,7 @@ const RudrakshaComponent = ({ index, isActive, isMeru }) => {
       <img
         src="/rudraksha.png"
         alt="shivbhakti"
+        loading="lazy"
         className={`
           w-16 absolute top-3 z-20 transition-all duration-300
           ${isActive ? 'brightness-[1.3]' : 'brightness-100'}
@@ -60,6 +76,7 @@ const RudrakshaComponent = ({ index, isActive, isMeru }) => {
       <img
         src="/thread.png"
         alt="thread"
+        loading="lazy"
         className="w-12 h-4 absolute bottom-0 z-0"
       />
 
@@ -74,10 +91,10 @@ const RudrakshaComponent = ({ index, isActive, isMeru }) => {
           #{index + 1}
         </div>
       )}
-
-    
     </div>
   );
-};
+});
+
+RudrakshaComponent.displayName = 'RudrakshaComponent';
 
 export default RudrakshaComponent;

@@ -28,6 +28,10 @@ const App = () => {
         <Route path="/shivlinga" element={<Layout />}>
           <Route index element={<ShivlingaWrapper />} />
         </Route>
+
+        <Route path="/tap" element={<Layout />}>
+          <Route index element={<Mala />} />
+        </Route>
       </Routes>
     </Router>
   );

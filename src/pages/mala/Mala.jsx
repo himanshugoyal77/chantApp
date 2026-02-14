@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import scrollInstructionAnimation from "../../assets/swipe up.json";
 import shivLingAnimation2 from "../../assets/Shivling.json";
@@ -12,10 +12,20 @@ import InstructionOverlay from "../../components/InstructionOverlay";
 import { MoveDown } from "lucide-react";
 import { translations } from "../../utils/translations";
 import { audioManager } from "../../utils/audioManager";
+import { FaRedo } from "react-icons/fa";
+import { preloadMalaImages } from "../../utils/preloadAssets";
 
 function Mala() {
+  const location = useLocation();
+  const viewMode = location.state?.viewMode ||
+    window.location.pathname === "/tap" ? "tap" : "mala";
   const t = translations.hi.mala;
   const navigate = useNavigate();
+
+  // Preload images on mount
+  useEffect(() => {
+    preloadMalaImages();
+  }, []);
 
   const TOTAL_BEADS = 108;
   const SCROLL_COOLDOWN = 400;
@@ -32,14 +42,6 @@ function Mala() {
   const [aumAnimationKey, setAumAnimationKey] = useState(0);
   const [showProgressMessage, setShowProgressMessage] = useState(false);
   const [progressMessage, setProgressMessage] = useState("");
-
-  // View mode: 'mala' or 'tap' - No localStorage persistence
-  const [viewMode, setViewMode] = useState("mala");
-
-  // daily streak system - ONLY localStorage for streak
-  const [streak, setStreak] = useState(
-    Number(localStorage.getItem("mala-streak") || 0),
-  );
 
   const radius = 40;
   const stroke = 8;
@@ -133,20 +135,7 @@ function Mala() {
     inactivityTimeout.current = setTimeout(() => setShowScrollHint(true), 4000);
   }, []);
 
-  // ---------- STREAK ----------
-  const updateStreak = () => {
-    const lastDate = localStorage.getItem("last-mala-date");
-    const today = new Date().toDateString();
-
-    if (lastDate !== today) {
-      setStreak((s) => {
-        const newStreak = s + 1;
-        localStorage.setItem("mala-streak", newStreak);
-        return newStreak;
-      });
-      localStorage.setItem("last-mala-date", today);
-    }
-  };
+  
 
   // ---------- TOGGLE VIEW MODE ----------
   const toggleViewMode = () => {
@@ -177,7 +166,6 @@ function Mala() {
       if (next === TOTAL_BEADS) {
         setShowModal(true);
         setMalaCount((m) => m + 1);
-        updateStreak();
         return 0;
       }
 
@@ -201,7 +189,6 @@ function Mala() {
       if (next === TOTAL_BEADS) {
         setShowModal(true);
         setMalaCount((m) => m + 1);
-        updateStreak();
         return 0;
       }
 
@@ -247,10 +234,10 @@ function Mala() {
       if (!isMouseDown || hasTriggered) return;
       e.preventDefault();
 
-      const deltaY = mouseStartY - e.clientY; // Negative for swipe down
+      const deltaY = mouseStartY - e.clientY; // Positive for swipe UP
 
-      // Only trigger on significant swipe down
-      if (deltaY < -SCROLL_THRESHOLD) {
+      // Only trigger on significant swipe UP
+      if (deltaY > SCROLL_THRESHOLD) {
         hasTriggered = true;
         moveToNextBead();
         isMouseDown = false; // Reset after trigger
@@ -281,10 +268,10 @@ function Mala() {
       if (hasTriggered) return;
 
       const currentY = e.touches[0].clientY;
-      const deltaY = touchStartY - currentY; // Negative for swipe down
+      const deltaY = touchStartY - currentY; // Positive for swipe UP, Negative for swipe DOWN
 
-      // Only trigger on significant swipe down
-      if (deltaY < -SCROLL_THRESHOLD) {
+      // Only trigger on significant swipe UP
+      if (deltaY > SCROLL_THRESHOLD) {
         hasTriggered = true;
         moveToNextBead();
       }
@@ -348,6 +335,19 @@ function Mala() {
     }
   }, [currentBead, viewMode]);
 
+
+  const resetMala = ()=>{
+    setCurrentBead(0);
+    // refresh the page
+    window.location.reload();
+
+    setStreak(0);
+    localStorage.setItem("mala-streak", 0);
+    localStorage.setItem("last-mala-date", "");
+    localStorage.setItem("current-bead", 0);
+    localStorage.setItem("last-mala-date", "");
+  }
+
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-[#101022] via-[#151535] to-[#101022] flex flex-col items-center justify-center overflow-hidden">
       <InstallPWA />
@@ -361,29 +361,25 @@ function Mala() {
       />
 
       {/* Audio Controls */}
-      <div className="fixed top-20 right-7 z-50 flex gap-2">
+      <div className="fixed top-20 right-7 z-32 flex gap-2">
+       
         <button
           onClick={() => setIsBgMusicPlaying(!isBgMusicPlaying)}
-          className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-[#101022]"
-        >
-          {isBgMusicPlaying ? <FaPause size={16} /> : <FaPlay size={16} />}
-        </button>
-        <button
-          onClick={() => setIsSoundMute(!isSoundMute)}
           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            isSoundMute ? "bg-gray-600" : "bg-[#FFD700] text-[#101022]"
+            !isBgMusicPlaying ? "bg-gray-600" : "bg-[#FFD700] text-[#101022]"
           }`}
         >
-          {isSoundMute ? <FaVolumeMute size={16} /> : <FaVolumeUp size={16} />}
+          {!isBgMusicPlaying ? <FaVolumeMute size={16} /> : <FaVolumeUp size={16} />}
         </button>
+
+        {/* reset button */}
         <button
-          onClick={() => setIsvibrationMute(!isVibrationMute)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            isVibrationMute ? "bg-gray-600" : "bg-[#FFD700] text-[#101022]"
-          }`}
+          onClick={resetMala}
+          className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-600 text-white"
         >
-          <LuVibrate size={16} />
+          <FaRedo size={16} />
         </button>
+       
       </div>
 
       {/* Floating Aum */}
@@ -412,9 +408,7 @@ function Mala() {
 
       {/* Stats */}
       <div className="fixed top-20 left-4 flex flex-col gap-3 text-white z-40 items-center justify-center ">
-        <div className="bg-[#2A2A4A]/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-[#FFD700]/30">
-          🔥 Streak: {streak} {streak === 1 ? "day" : "days"}
-        </div>
+      
 
         {/* Circular progress bar */}
         <div className="relative w-28 h-28 flex items-center justify-center">
@@ -463,52 +457,24 @@ function Mala() {
         </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="fixed top-36 right-7 flex flex-col gap-2 z-50">
-        <button
-          onClick={toggleViewMode}
-          className="bg-[#2A2A4A] border border-[#FFD700] text-[#FFD700] px-4 py-2 rounded-lg text-sm hover:bg-[#FFD700] hover:text-[#2A2A4A] transition-all active:scale-95 shadow-lg flex items-center gap-2 backdrop-blur-sm"
-        >
-          {viewMode === "mala" ? (
-            <>
-              <span>🖱️</span>
-              <span>Tap Mode</span>
-            </>
-          ) : (
-            <>
-              <span>📿</span>
-              <span>Mala Mode</span>
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={() => navigate("/shivlinga")}
-          className="bg-[#2A2A4A] border border-[#FF6B35] text-[#FF6B35] px-4 py-2 rounded-lg text-sm hover:bg-[#FF6B35] hover:text-[#2A2A4A] transition-all active:scale-95 shadow-lg flex items-center gap-2 backdrop-blur-sm"
-        >
-          <span>🔱</span>
-          <span>Shivlinga</span>
-        </button>
-      </div>
 
       {/* Scroll hint - Only in mala mode */}
       {viewMode === "mala" && (
         <div
-          className={`fixed bottom-20 left-1/2 -translate-x-1/2 w-24 h-24 pointer-events-none z-40 transition-opacity duration-500 ${
+          className={`fixed bottom-32 left-1/2 -translate-x-1/2 w-24 h-24 pointer-events-none z-40 transition-opacity duration-500 ${
             showScrollHint ? "opacity-100" : "opacity-0"
           }`}
         >
           {/* flip the animation */}
           <Lottie
-          className="rotate-180 transition-all duration-500"
-          
+          className="h-40 w-40"
           animationData={scrollInstructionAnimation} loop />
         </div>
       )}
 
-      {/* TAP VIEW MODE */}
+        {/* TAP VIEW MODE */}
       {viewMode === "tap" && (
-        <div className="flex flex-col items-center justify-center h-screen relative">
+        <div className="flex flex-col items-center justify-center relative">
           <button
             onClick={handleTap}
             className="group relative w-64 h-64 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200"
@@ -546,6 +512,7 @@ function Mala() {
           </p>
         </div>
       )}
+
 
       {/* MALA VIEW MODE - FIXED VERSION */}
       {viewMode === "mala" && (
@@ -594,7 +561,9 @@ function Mala() {
             </p>
             <button
               className="border border-[#FFD700] text-[#FFD700] px-8 py-2 rounded-full hover:bg-[#FFD700] hover:text-black transition-colors"
-              onClick={() => setShowModal(false)}
+              onClick={() => {
+                navigate("/shivlinga")
+                setShowModal(false)}}
             >
               {t.modal.btn}
             </button>

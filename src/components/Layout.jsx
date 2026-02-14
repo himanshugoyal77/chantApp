@@ -6,12 +6,12 @@ import TimedAdScript from "./PopunderAd";
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-[#0e0c0a] text-white font-sans selection:bg-[var(--deep-gold)] selection:text-black">
+    <div className="min-h-screen bg-[#0e0c0a] text-white font-sans selection:bg-[var(--deep-gold)] selection:text-black overflow-hidden">
       <Navbar />
       <main className="pt-16 min-h-screen flex flex-col">
         <Outlet />
       </main>
-      <BannerAd />
+      {/* <BannerAd /> */}
       <TimedAdScript />
     </div>
   );

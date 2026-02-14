@@ -1,8 +1,8 @@
-import Lottie from 'lottie-react';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import Lottie from "lottie-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import shivlingAnimation from "../assets/Shivling.json";
-import WeeklyStreak from '../components/WeeklyStreak';
+import WeeklyStreak from "../components/WeeklyStreak";
 
 export default function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -22,7 +22,7 @@ export default function OnboardingFlow() {
 
   const completeOnboarding = () => {
     console.log("Onboarding completed");
-    navigate('/mala');
+    navigate("/mala");
   };
 
   return (
@@ -32,9 +32,10 @@ export default function OnboardingFlow() {
         <div className="relative flex flex-col h-screen w-full max-w-md mx-auto px-6">
           {/* Skip Button */}
           <div className="flex justify-end pt-8">
-            <button 
+            <button
               onClick={completeOnboarding}
-              className="text-white/60 text-sm font-medium hover:text-white transition-colors">
+              className="text-white/60 text-sm font-medium hover:text-white transition-colors"
+            >
               छोड़ें
             </button>
           </div>
@@ -45,7 +46,7 @@ export default function OnboardingFlow() {
               {/* Decorative circles */}
               <div className="absolute inset-0 rounded-full border border-[#FF9933]/20 animate-pulse"></div>
               <div className="absolute inset-4 rounded-full border border-[#FFD700]/10"></div>
-              
+
               {/* Om Symbol */}
               <Lottie animationData={shivlingAnimation} />
             </div>
@@ -57,25 +58,29 @@ export default function OnboardingFlow() {
               <span className="text-[#FFD700]">भगवान शिव</span> की भक्ति
             </h1>
             <p className="text-white/70 text-base font-normal leading-relaxed px-4">
-              डिजिटल माला के साथ जाप करें और शिवलिंग का अभिषेक करें। हर हर महादेव। 🙏
+              डिजिटल माला के साथ जाप करें और शिवलिंग का अभिषेक करें। हर हर
+              महादेव। 🙏
             </p>
           </div>
 
           {/* Bottom Controls */}
-          <div className="pb-12 space-y-6">
+          <div className="w-full pb-12 space-y-6 flex flex-col items-center">
             {/* Pagination Dots */}
-            <div className="flex w-full flex-row items-center justify-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-2">
               <div className="h-2 w-6 rounded-full bg-[var(--deep-gold)] shadow-[0_0_8px_rgba(212,175,55,0.6)]"></div>
               <div className="h-2 w-2 rounded-full bg-white/20"></div>
               <div className="h-2 w-2 rounded-full bg-white/20"></div>
             </div>
 
             {/* Next Button */}
-            <button 
+            <button
               onClick={nextStep}
-              className="w-full bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 group transition-all duration-300 active:scale-95 shadow-lg">
+              className="w-full max-w-[280px] bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 group transition-all duration-300 active:scale-95 shadow-lg"
+            >
               <span>आगे बढ़ें</span>
-              <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
+              <span className="text-xl group-hover:translate-x-1 transition-transform">
+                →
+              </span>
             </button>
           </div>
 
@@ -90,9 +95,10 @@ export default function OnboardingFlow() {
         <div className="flex flex-col h-screen max-w-md mx-auto items-center">
           {/* Top Navigation */}
           <div className="flex items-center p-6 justify-between">
-            <button 
+            <button
               onClick={prevStep}
-              className="text-white/60 hover:text-white flex size-10 items-center justify-center transition-colors">
+              className="text-white/60 hover:text-white flex size-10 items-center justify-center transition-colors"
+            >
               <span className="text-2xl">←</span>
             </button>
             <span className="text-white/40 text-xs font-semibold tracking-widest uppercase">
@@ -119,8 +125,12 @@ export default function OnboardingFlow() {
                 <div className="flex items-center gap-4">
                   <div className="text-5xl">🙏</div>
                   <div className="flex-1">
-                    <h3 className="text-[var(--deep-gold)] text-lg font-bold mb-1">जाप माला</h3>
-                    <p className="text-white/60 text-sm">108 मनकों के साथ डिजिटल रुद्राक्ष माला</p>
+                    <h3 className="text-[var(--deep-gold)] text-lg font-bold mb-1">
+                      जाप माला
+                    </h3>
+                    <p className="text-white/60 text-sm">
+                      108 मनकों के साथ डिजिटल रुद्राक्ष माला
+                    </p>
                   </div>
                 </div>
               </div>
@@ -130,31 +140,36 @@ export default function OnboardingFlow() {
                 <div className="flex items-center gap-4">
                   <div className="text-5xl">🔱</div>
                   <div className="flex-1">
-                    <h3 className="text-[var(--deep-gold)] text-lg font-bold mb-1">शिवलिंग दर्शन</h3>
-                    <p className="text-white/60 text-sm">आभासी अभिषेक और बेलपत्र अर्पण</p>
+                    <h3 className="text-[var(--deep-gold)] text-lg font-bold mb-1">
+                      शिवलिंग दर्शन
+                    </h3>
+                    <p className="text-white/60 text-sm">
+                      आभासी अभिषेक और बेलपत्र अर्पण
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </main>
 
-       
-
           {/* Bottom Navigation */}
-          <footer className="p-6 space-y-6">
+          <footer className="w-full p-6 space-y-6 flex flex-col items-center">
             {/* Pagination */}
-            <div className="flex w-full flex-row items-center justify-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-2">
               <div className="h-2 w-2 rounded-full bg-white/20"></div>
               <div className="h-2 w-6 rounded-full bg-[var(--deep-gold)] shadow-[0_0_10px_rgba(212,175,55,0.6)]"></div>
               <div className="h-2 w-2 rounded-full bg-white/20"></div>
             </div>
 
             {/* Continue Button */}
-           <button 
+            <button
               onClick={nextStep}
-              className="w-[280px] max-w-[280px] bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 group transition-all duration-300 active:scale-95 shadow-lg">
+              className="w-full max-w-[280px] bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 group transition-all duration-300 active:scale-95 shadow-lg"
+            >
               <span>आगे बढ़ें</span>
-              <span className="text-xl group-hover:translate-x-1 transition-transform">→</span>
+              <span className="text-xl group-hover:translate-x-1 transition-transform">
+                →
+              </span>
             </button>
           </footer>
         </div>
@@ -165,9 +180,10 @@ export default function OnboardingFlow() {
         <div className="relative flex h-screen w-full max-w-md mx-auto flex-col justify-between px-6">
           {/* Header */}
           <div className="flex items-center pt-6 pb-2 justify-between">
-            <button 
+            <button
               onClick={prevStep}
-              className="text-white/60 hover:text-white flex size-10 items-center justify-center transition-colors">
+              className="text-white/60 hover:text-white flex size-10 items-center justify-center transition-colors"
+            >
               <span className="text-2xl">←</span>
             </button>
             <span className="text-white/40 text-xs font-semibold tracking-widest uppercase">
@@ -178,26 +194,27 @@ export default function OnboardingFlow() {
           {/* Main Content */}
           <div className="flex flex-col flex-1 items-center justify-center">
             {/* Headline */}
-            <WeeklyStreak/>
+            <WeeklyStreak />
             <div className="text-center my-12">
               <h1 className="text-white tracking-tight text-3xl md:text-4xl font-extrabold leading-tight mb-4">
                 हर हर महादेव 🙏
               </h1>
               <p className="text-white/60 text-base leading-relaxed max-w-[280px] mx-auto">
-                अपनी भक्ति यात्रा शुरू करें और भगवान शिव का आशीर्वाद प्राप्त करें
+                अपनी भक्ति यात्रा शुरू करें और भगवान शिव का आशीर्वाद प्राप्त
+                करें
               </p>
             </div>
 
             {/* Central Visual */}
             {/* <div className="relative w-64 h-64 flex items-center justify-center mb-8">
               {/* Background Glow */}
-              <div className="absolute -z-2 inset-0 bg-[var(--deep-gold)]/10 rounded-full blur-[60px]"></div>
-              
-              {/* Om Symbol */}
-              {/* <div className="relative z-10 text-[8rem] text-[var(--deep-gold)] font-bold drop-shadow-[0_0_40px_rgba(212,175,55,0.8)] animate-pulse">
+            <div className="absolute -z-2 inset-0 bg-[var(--deep-gold)]/10 rounded-full blur-[60px]"></div>
+
+            {/* Om Symbol */}
+            {/* <div className="relative z-10 text-[8rem] text-[var(--deep-gold)] font-bold drop-shadow-[0_0_40px_rgba(212,175,55,0.8)] animate-pulse">
                 ॐ
               </div>
-            </div> */} 
+            </div> */}
 
             {/* Progress Indicators */}
             <div className="flex gap-2">
@@ -208,10 +225,11 @@ export default function OnboardingFlow() {
           </div>
 
           {/* Bottom Action */}
-          <div className="pb-12 pt-6">
-            <button 
+          <div className="pb-12 pt-6 flex flex-col items-center">
+            <button
               onClick={completeOnboarding}
-              className="w-full bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black text-lg font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]">
+              className="w-full max-w-[280px] bg-gradient-to-r from-[var(--deep-gold)] to-[#FDB931] text-black text-lg font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
+            >
               शुरू करें
             </button>
             <p className="text-center text-white/40 text-xs mt-4">

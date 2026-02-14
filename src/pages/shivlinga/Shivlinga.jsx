@@ -4,6 +4,7 @@ import GreenScreenVideo from "../../components/GreenScreenVideo";
 import "./Shivling.css";
 import { translations } from "../../utils/translations";
 import { audioManager } from "../../utils/audioManager";
+import { preloadVideos } from "../../utils/preloadAssets";
 
 const ShivLingPuja = () => {
   const t = translations.hi.shivlinga;
@@ -13,6 +14,11 @@ const ShivLingPuja = () => {
   const pelaRef = useRef(null);
   const belpatraRef = useRef(null);
   const [showInstruction, setShowInstruction] = useState(true);
+
+  // Preload video on mount
+  useEffect(() => {
+    preloadVideos();
+  }, []);
 
   const pelaStart = useRef({ x: 0, y: 0 });
   const belStart = useRef({ x: 0, y: 0 });
