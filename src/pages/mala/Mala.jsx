@@ -498,7 +498,11 @@ function Mala() {
             showScrollHint ? "opacity-100" : "opacity-0"
           }`}
         >
-          <Lottie animationData={scrollInstructionAnimation} loop />
+          {/* flip the animation */}
+          <Lottie
+          className="rotate-180 transition-all duration-500"
+          
+          animationData={scrollInstructionAnimation} loop />
         </div>
       )}
 
