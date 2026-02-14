@@ -50,6 +50,7 @@ function Mala() {
   const strokeDashoffset = circumference - progress * circumference;
 
   const containerRef = useRef(null);
+  const beadsContainerRef = useRef(null);
   const lastScrollTime = useRef(0);
   const touchHandled = useRef(false);
   const progressMessageTimeout = useRef(null);
@@ -209,6 +210,7 @@ function Mala() {
   }, [triggerFeedback]);
 
   // ---------- SCROLL / TOUCH ----------
+  // ---------- SCROLL / TOUCH ----------
   useEffect(() => {
     const container = containerRef.current;
     if (!container || viewMode !== "mala") return;
@@ -216,6 +218,8 @@ function Mala() {
     let touchStartY = 0;
     let touchStartTime = 0;
     let hasTriggered = false;
+    let isMouseDown = false;
+    let mouseStartY = 0;
 
     const handleWheel = (e) => {
       e.preventDefault();
@@ -227,7 +231,45 @@ function Mala() {
       }
     };
 
+    const handleMouseDown = (e) => {
+      // Only handle left click (button 0)
+      if (e.button !== 0) {
+        e.preventDefault();
+        return;
+      }
+      isMouseDown = true;
+      mouseStartY = e.clientY;
+      hasTriggered = false;
+      handleUserActivity();
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isMouseDown || hasTriggered) return;
+      e.preventDefault();
+
+      const deltaY = mouseStartY - e.clientY; // Negative for swipe down
+
+      // Only trigger on significant swipe down
+      if (deltaY < -SCROLL_THRESHOLD) {
+        hasTriggered = true;
+        moveToNextBead();
+        isMouseDown = false; // Reset after trigger
+      }
+    };
+
+    const handleMouseUp = (e) => {
+      e.preventDefault();
+      isMouseDown = false;
+      hasTriggered = false;
+    };
+
+    const handleMouseLeave = (e) => {
+      isMouseDown = false;
+      hasTriggered = false;
+    };
+
     const handleTouchStart = (e) => {
+      e.preventDefault(); // Prevent default touch behavior
       touchStartY = e.touches[0].clientY;
       touchStartTime = Date.now();
       hasTriggered = false;
@@ -235,40 +277,62 @@ function Mala() {
     };
 
     const handleTouchMove = (e) => {
-      // Don't prevent default entirely - let the browser handle some touch events
+      e.preventDefault(); // Always prevent default to stop scrolling
       if (hasTriggered) return;
 
       const currentY = e.touches[0].clientY;
       const deltaY = touchStartY - currentY; // Negative for swipe down
 
-      // Only trigger on significant swipe down (negative deltaY means swipe down)
+      // Only trigger on significant swipe down
       if (deltaY < -SCROLL_THRESHOLD) {
-        // Swipe down detected
-        e.preventDefault(); // Only prevent default when we're about to trigger
         hasTriggered = true;
         moveToNextBead();
       }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e) => {
+      e.preventDefault();
       hasTriggered = false;
     };
 
-    // Use passive: true for touchstart to allow browser to handle scrolling when needed
+    const handleContextMenu = (e) => {
+      e.preventDefault(); // Prevent right-click context menu
+      return false;
+    };
+
+    // Add event listeners with proper options
     container.addEventListener("wheel", handleWheel, { passive: false });
+
+    // Mouse events for desktop
+    container.addEventListener("mousedown", handleMouseDown);
+    container.addEventListener("mousemove", handleMouseMove);
+    container.addEventListener("mouseup", handleMouseUp);
+    container.addEventListener("mouseleave", handleMouseLeave);
+
+    // Touch events for mobile
     container.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
+      passive: false,
     });
     container.addEventListener("touchmove", handleTouchMove, {
       passive: false,
     });
-    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+    // Prevent context menu on right click
+    container.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
+
+      container.removeEventListener("mousedown", handleMouseDown);
+      container.removeEventListener("mousemove", handleMouseMove);
+      container.removeEventListener("mouseup", handleMouseUp);
+      container.removeEventListener("mouseleave", handleMouseLeave);
+
       container.removeEventListener("touchstart", handleTouchStart);
       container.removeEventListener("touchmove", handleTouchMove);
       container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [moveToNextBead, handleUserActivity, viewMode]);
 
@@ -278,10 +342,10 @@ function Mala() {
     if (!container || viewMode !== "mala") return;
 
     const beadHeight = 64;
-    container.scrollTo({
-      top: currentBead * beadHeight,
-      behavior: "smooth",
-    });
+    // Use transform instead of scrollTo for smoother animation without actual scrolling
+    if (beadsContainerRef.current) {
+      beadsContainerRef.current.style.transform = `translateY(-${currentBead * beadHeight}px)`;
+    }
   }, [currentBead, viewMode]);
 
   return (
@@ -479,24 +543,31 @@ function Mala() {
         </div>
       )}
 
-      {/* MALA VIEW MODE */}
+      {/* MALA VIEW MODE - FIXED VERSION */}
       {viewMode === "mala" && (
         <div
           ref={containerRef}
-          className="h-screen w-full overflow-y-auto cursor-ns-resize"
-          style={{ touchAction: "pan-y" }}
+          className="h-screen w-full overflow-hidden cursor-ns-resize relative"
+          style={{ touchAction: "none" }}
         >
-          <div className="pt-[45vh] pb-[50vh] flex flex-col items-center">
-            {Array.from({ length: TOTAL_BEADS }).map((_, index) => (
+          <div
+            ref={beadsContainerRef}
+            className="flex flex-col items-center transition-transform duration-300 ease-out will-change-transform"
+            style={{
+              transform: `translateY(${45}vh)`, // Initial offset
+              paddingBottom: "50vh",
+            }}
+          >
+            {Array.from({ length: TOTAL_BEADS + 8 }).map((_, index) => (
               <div
                 key={index}
                 style={{ height: 64 }}
                 className="flex items-center justify-center"
               >
                 <RudrakshaComponent
-                  index={index}
-                  isActive={index === currentBead}
-                  isMeru={index === 0}
+                  index={index - 5}
+                  isActive={index === currentBead + 5}
+                  isMeru={index === 5}
                 />
               </div>
             ))}

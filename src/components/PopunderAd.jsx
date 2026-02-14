@@ -38,7 +38,7 @@ const TimedAdScript = () => {
 
     const script = document.createElement("script");
     script.src =
-      "https://pl28683832.effectivegatecpm.com/f8/7f/fc/f87ffcc329a29a40a71c1f1c16ee2b93.js";
+      "https://pl28712463.effectivegatecpm.com/28/db/28/28db2840feaa74dc954e58634d96afd8.js";
     script.async = true;
 
     containerRef.current.appendChild(script);

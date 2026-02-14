@@ -8,7 +8,7 @@ const BannerAd = () => {
 
     // Set global ad config
     window.atOptions = {
-      key: "ff419b96909d9857e44a7fdbc25a1edd",
+      key: "33ca2d4ee8148924750405aa9d778819",
       format: "iframe",
       height: 60,
       width: 468,
@@ -18,7 +18,7 @@ const BannerAd = () => {
     // Create script element
     const script = document.createElement("script");
     script.src =
-      "https://www.highperformanceformat.com/ff419b96909d9857e44a7fdbc25a1edd/invoke.js"; // replace if provider gives different url
+      "https://www.highperformanceformat.com/33ca2d4ee8148924750405aa9d778819/invoke.js"; // replace if provider gives different url
     script.async = true;
 
     adRef.current.appendChild(script);
