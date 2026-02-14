@@ -32,22 +32,22 @@ function Mala() {
   const [aumAnimationKey, setAumAnimationKey] = useState(0);
   const [showProgressMessage, setShowProgressMessage] = useState(false);
   const [progressMessage, setProgressMessage] = useState("");
-  
+
   // View mode: 'mala' or 'tap' - No localStorage persistence
   const [viewMode, setViewMode] = useState("mala");
 
   // daily streak system - ONLY localStorage for streak
   const [streak, setStreak] = useState(
-    Number(localStorage.getItem("mala-streak") || 0)
+    Number(localStorage.getItem("mala-streak") || 0),
   );
 
   const radius = 40;
-const stroke = 8;
-const normalizedRadius = radius - stroke * 0.5;
-const circumference = normalizedRadius * 2 * Math.PI;
+  const stroke = 8;
+  const normalizedRadius = radius - stroke * 0.5;
+  const circumference = normalizedRadius * 2 * Math.PI;
 
-const progress = (currentBead + 1) / 108;
-const strokeDashoffset = circumference - progress * circumference;
+  const progress = (currentBead + 1) / 108;
+  const strokeDashoffset = circumference - progress * circumference;
 
   const containerRef = useRef(null);
   const lastScrollTime = useRef(0);
@@ -62,8 +62,9 @@ const strokeDashoffset = circumference - progress * circumference;
   // ---------- AUDIO ----------
   const initAudioContext = () => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      audioContextRef.current = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
     }
     return audioContextRef.current;
   };
@@ -81,13 +82,13 @@ const strokeDashoffset = circumference - progress * circumference;
       oscillator.frequency.setValueAtTime(180, audioCtx.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(
         100,
-        audioCtx.currentTime + 0.08
+        audioCtx.currentTime + 0.08,
       );
 
       gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(
         0.001,
-        audioCtx.currentTime + 0.1
+        audioCtx.currentTime + 0.1,
       );
 
       oscillator.connect(gainNode);
@@ -106,46 +107,30 @@ const strokeDashoffset = circumference - progress * circumference;
         navigator.vibrate([10, 5, 10]);
       }
 
-      setAumAnimationKey((prev) => prev + 1);
-      
+      if (showAum) {
+        setAumAnimationKey((prev) => prev + 1);
+      }
     },
-    [playBeadSound]
+    [playBeadSound, isVibrationMute],
   );
 
   // on every tap show aum animation
-  const triggerFeedbackOnTap = useCallback(
-   () => {
+  const triggerFeedbackOnTap = useCallback(() => {
     playBeadSound();
 
     if (!isVibrationMute && "vibrate" in navigator) {
       navigator.vibrate([10, 5, 10]);
     }
 
-    if (showAum) {
-      setAumAnimationKey((prev) => prev + 1);
-    }
-  },
-  [playBeadSound, isVibrationMute]
-);
+    setAumAnimationKey((prev) => prev + 1);
+  }, [playBeadSound, isVibrationMute]);
 
   // ---------- USER ACTIVITY ----------
   const handleUserActivity = useCallback(() => {
     setShowScrollHint(false);
     if (inactivityTimeout.current) clearTimeout(inactivityTimeout.current);
-    inactivityTimeout.current = setTimeout(
-      () => setShowScrollHint(true),
-      4000
-    );
+    inactivityTimeout.current = setTimeout(() => setShowScrollHint(true), 4000);
   }, []);
-
-  // // ---------- BLESSING ----------
-  // const showRandomBlessing = () => {
-  //   const msg =
-  //     SHIV_BLESSINGS[Math.floor(Math.random() * SHIV_BLESSINGS.length)];
-  //   setProgressMessage(msg);
-  //   setShowProgressMessage(true);
-  //   setTimeout(() => setShowProgressMessage(false), 2500);
-  // };
 
   // ---------- STREAK ----------
   const updateStreak = () => {
@@ -175,14 +160,18 @@ const strokeDashoffset = circumference - progress * circumference;
   const handleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastScrollTime.current < 100) return; // Faster cooldown for taps
-    
+
     lastScrollTime.current = now;
 
     setCurrentBead((prev) => {
       const next = prev + 1;
 
       const showAum = AUM_MILESTONES.includes(next);
-      triggerFeedback(showAum);
+      if (showAum) {
+        triggerFeedback(true);
+      } else {
+        triggerFeedbackOnTap();
+      }
 
       if (next === TOTAL_BEADS) {
         setShowModal(true);
@@ -193,7 +182,7 @@ const strokeDashoffset = circumference - progress * circumference;
 
       return next;
     });
-  }, [triggerFeedback]);
+  }, [triggerFeedback, triggerFeedbackOnTap]);
 
   // ---------- MOVE BEAD ----------
   const moveToNextBead = useCallback(() => {
@@ -204,8 +193,6 @@ const strokeDashoffset = circumference - progress * circumference;
 
     setCurrentBead((prev) => {
       const next = prev + 1;
-
-      //if (next % 12 === 0) showRandomBlessing();
 
       const showAum = AUM_MILESTONES.includes(next);
       triggerFeedback(showAum);
@@ -227,48 +214,55 @@ const strokeDashoffset = circumference - progress * circumference;
     if (!container || viewMode !== "mala") return;
 
     let touchStartY = 0;
+    let touchStartTime = 0;
+    let hasTriggered = false;
 
     const handleWheel = (e) => {
       e.preventDefault();
-
       // allow ONLY downward scroll
-      if (e.deltaY < 0) return;
-
-      moveToNextBead();
-      handleUserActivity();
+      if (e.deltaY > 0) {
+        // Only trigger on scroll down
+        moveToNextBead();
+        handleUserActivity();
+      }
     };
 
     const handleTouchStart = (e) => {
       touchStartY = e.touches[0].clientY;
-      touchHandled.current = false;
+      touchStartTime = Date.now();
+      hasTriggered = false;
       handleUserActivity();
     };
 
     const handleTouchMove = (e) => {
-      e.preventDefault();
-      if (touchHandled.current) return;
+      // Don't prevent default entirely - let the browser handle some touch events
+      if (hasTriggered) return;
 
       const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchStartY; // swipe down only
+      const deltaY = touchStartY - currentY; // Negative for swipe down
 
-      if (deltaY < SCROLL_THRESHOLD) return;
-
-      touchHandled.current = true;
-      moveToNextBead();
+      // Only trigger on significant swipe down (negative deltaY means swipe down)
+      if (deltaY < -SCROLL_THRESHOLD) {
+        // Swipe down detected
+        e.preventDefault(); // Only prevent default when we're about to trigger
+        hasTriggered = true;
+        moveToNextBead();
+      }
     };
 
     const handleTouchEnd = () => {
-      touchHandled.current = false;
+      hasTriggered = false;
     };
 
+    // Use passive: true for touchstart to allow browser to handle scrolling when needed
     container.addEventListener("wheel", handleWheel, { passive: false });
     container.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
+      passive: true,
     });
     container.addEventListener("touchmove", handleTouchMove, {
       passive: false,
     });
-    container.addEventListener("touchend", handleTouchEnd);
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
@@ -281,14 +275,14 @@ const strokeDashoffset = circumference - progress * circumference;
   // ---------- AUTO SCROLL ----------
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || viewMode !== "mala") return;
 
     const beadHeight = 64;
     container.scrollTo({
       top: currentBead * beadHeight,
       behavior: "smooth",
     });
-  }, [currentBead]);
+  }, [currentBead, viewMode]);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-[#101022] via-[#151535] to-[#101022] flex flex-col items-center justify-center overflow-hidden">
@@ -302,6 +296,31 @@ const strokeDashoffset = circumference - progress * circumference;
         icon={<MoveDown size={32} />}
       />
 
+      {/* Audio Controls */}
+      <div className="fixed top-20 right-7 z-50 flex gap-2">
+        <button
+          onClick={() => setIsBgMusicPlaying(!isBgMusicPlaying)}
+          className="w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center text-[#101022]"
+        >
+          {isBgMusicPlaying ? <FaPause size={16} /> : <FaPlay size={16} />}
+        </button>
+        <button
+          onClick={() => setIsSoundMute(!isSoundMute)}
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            isSoundMute ? "bg-gray-600" : "bg-[#FFD700] text-[#101022]"
+          }`}
+        >
+          {isSoundMute ? <FaVolumeMute size={16} /> : <FaVolumeUp size={16} />}
+        </button>
+        <button
+          onClick={() => setIsvibrationMute(!isVibrationMute)}
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+            isVibrationMute ? "bg-gray-600" : "bg-[#FFD700] text-[#101022]"
+          }`}
+        >
+          <LuVibrate size={16} />
+        </button>
+      </div>
 
       {/* Floating Aum */}
       <div
@@ -327,88 +346,91 @@ const strokeDashoffset = circumference - progress * circumference;
         </div>
       </div>
 
-
       {/* Stats */}
-      <div className="fixed top-20 w-full left-4 flex flex-col gap-3 text-white z-40">
-        <div>🔥 Streak: {streak} days</div>
-        <div className="flex flex-col items-start text-center w-28">
-         <div className="w-full text-center"> {currentBead + 1}/108  </div>
-          {/* circular progress bar */}
-       
-<div className="relative w-28 h-28 flex items-center justify-center">
-
-  <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg]">
-    
-    {/* Background circle */}
-    <circle
-      stroke="rgba(255,255,255,0.1)"
-      fill="transparent"
-      strokeWidth={stroke}
-      r={normalizedRadius}
-      cx={radius}
-      cy={radius}
-    />
-
-    {/* Progress circle */}
-    <circle
-      stroke="url(#gradient)"
-      fill="transparent"
-      strokeWidth={stroke}
-      strokeLinecap="round"
-      strokeDasharray={circumference}
-      strokeDashoffset={strokeDashoffset}
-      r={normalizedRadius}
-      cx={radius}
-      cy={radius}
-      className="transition-all duration-500"
-    />
-
-    {/* Gradient definition */}
-    <defs>
-      <linearGradient id="gradient">
-        <stop offset="0%" stopColor="#58CC02" />
-        <stop offset="100%" stopColor="#89E219" />
-      </linearGradient>
-    </defs>
-
-  </svg>
-
-  {/* Center text */}
-  <div className="absolute text-white font-bold text-lg">
-    {currentBead + 1}
-  </div>
-
-</div>
-
+      <div className="fixed top-20 left-4 flex flex-col gap-3 text-white z-40 items-center justify-center ">
+        <div className="bg-[#2A2A4A]/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-[#FFD700]/30">
+          🔥 Streak: {streak} {streak === 1 ? "day" : "days"}
         </div>
 
+        {/* Circular progress bar */}
+        <div className="relative w-28 h-28 flex items-center justify-center">
+          <svg
+            height={radius * 2}
+            width={radius * 2}
+            className="rotate-[-90deg]"
+          >
+            {/* Background circle */}
+            <circle
+              stroke="rgba(255,255,255,0.1)"
+              fill="transparent"
+              strokeWidth={stroke}
+              r={normalizedRadius}
+              cx={radius}
+              cy={radius}
+            />
+            {/* Progress circle */}
+            <circle
+              stroke="url(#gradient)"
+              fill="transparent"
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              r={normalizedRadius}
+              cx={radius}
+              cy={radius}
+              className="transition-all duration-500"
+            />
+            {/* Gradient definition */}
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#58CC02" />
+                <stop offset="100%" stopColor="#89E219" />
+              </linearGradient>
+            </defs>
+          </svg>
+          {/* Center text */}
+          <div className="absolute text-white font-bold text-xl">
+            {currentBead + 1}
+          </div>
+        </div>
+        <div className="text-center text-sm opacity-70">
+          {currentBead + 1} / {TOTAL_BEADS}
+        </div>
+      </div>
 
-
-
-        {/* Toggle View Button */}
-       <div className="w-28 fixed top-20 right-4">
-         <button
+      {/* Navigation Buttons */}
+      <div className="fixed top-36 right-7 flex flex-col gap-2 z-50">
+        <button
           onClick={toggleViewMode}
-          className="mt-2 bg-[#FFD700]/20 w-28 border border-[#FFD700] text-[#FFD700] px-3 py-2 rounded-lg text-xs hover:bg-[#FFD700]/30 transition-all active:scale-95"
+          className="bg-[#2A2A4A] border border-[#FFD700] text-[#FFD700] px-4 py-2 rounded-lg text-sm hover:bg-[#FFD700] hover:text-[#2A2A4A] transition-all active:scale-95 shadow-lg flex items-center gap-2 backdrop-blur-sm"
         >
-          {viewMode === "mala" ? "🖱️ Tap Mode" : "📿 Mala Mode"}
+          {viewMode === "mala" ? (
+            <>
+              <span>🖱️</span>
+              <span>Tap Mode</span>
+            </>
+          ) : (
+            <>
+              <span>📿</span>
+              <span>Mala Mode</span>
+            </>
+          )}
         </button>
-        
-        {/* Navigate to Shivlinga */}
+
         <button
           onClick={() => navigate("/shivlinga")}
-          className="mt-2  w-28 text-center bg-[#FF6B35]/20 border border-[#FF6B35] text-[#FF6B35] px-3 py-2 rounded-lg text-xs hover:bg-[#FF6B35]/30 transition-all active:scale-95 flex items-center gap-1"
+          className="bg-[#2A2A4A] border border-[#FF6B35] text-[#FF6B35] px-4 py-2 rounded-lg text-sm hover:bg-[#FF6B35] hover:text-[#2A2A4A] transition-all active:scale-95 shadow-lg flex items-center gap-2 backdrop-blur-sm"
         >
           <span>🔱</span>
           <span>Shivlinga</span>
         </button>
-       </div>
       </div>
 
       {/* Scroll hint - Only in mala mode */}
       {viewMode === "mala" && (
         <div
-          className={`fixed bottom-20 w-24 ${
+          className={`fixed bottom-20 left-1/2 -translate-x-1/2 w-24 h-24 pointer-events-none z-40 transition-opacity duration-500 ${
             showScrollHint ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -418,88 +440,59 @@ const strokeDashoffset = circumference - progress * circumference;
 
       {/* TAP VIEW MODE */}
       {viewMode === "tap" && (
-       <div className="flex flex-col items-center justify-center h-full relative">
+        <div className="flex flex-col items-center justify-center h-screen relative">
+          <button
+            onClick={handleTap}
+            className="group relative w-64 h-64 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200"
+          >
+            {/* Outer Aura Ring */}
+            <div className="absolute inset-0 rounded-full bg-[#FFD700]/20 blur-2xl animate-pulse"></div>
 
-  <button
-    onClick={() => {
-      handleTap();
-      if ("vibrate" in navigator) navigator.vibrate(20);
-    }}
-    className="group relative w-64 h-64 rounded-full flex items-center justify-center active:scale-95 transition-all duration-200"
-  >
+            {/* Energy Ring */}
+            <div className="absolute inset-[-12px] rounded-full border border-[#FFD700]/40 animate-spin-slow"></div>
 
-    {/* Outer Aura Ring */}
-    <div className="absolute inset-0 rounded-full bg-[#FFD700]/20 blur-2xl animate-pulse"></div>
+            {/* Main Button */}
+            <div className="relative w-full h-full rounded-full bg-gradient-to-br from-[#FFD700] to-[#FDB931] flex items-center justify-center shadow-[0_0_60px_rgba(255,215,0,0.5)] group-hover:shadow-[0_0_90px_rgba(255,215,0,0.7)] transition-all">
+              {/* Om Symbol */}
+              <div className="text-7xl font-bold text-[#101022] tracking-wide">
+                ॐ
+              </div>
 
-    {/* Energy Ring */}
-    <div className="absolute inset-[-12px] rounded-full border border-[#FFD700]/40 animate-spin-slow"></div>
+              {/* Ripple Wave */}
+              <span className="absolute inset-0 rounded-full border border-white/40 scale-0 opacity-0 group-active:scale-[1.6] group-active:opacity-100 transition-all duration-700" />
 
-    {/* Main Button */}
-    <div className="
-      relative w-full h-full rounded-full
-      bg-gradient-to-br from-[#FFD700] to-[#FDB931]
-      flex items-center justify-center
-      shadow-[0_0_60px_rgba(255,215,0,0.5)]
-      group-hover:shadow-[0_0_90px_rgba(255,215,0,0.7)]
-      transition-all
-    ">
+              {/* Inner Glow */}
+              <div className="absolute inset-0 rounded-full bg-white/10 blur-xl opacity-50" />
+            </div>
 
-      {/* Om Symbol */}
-      <div className="text-7xl font-bold text-[#101022] tracking-wide">
-        ॐ
-      </div>
+            {/* Floating Energy Particles on Tap */}
+            <div className="pointer-events-none absolute inset-0">
+              <span className="absolute top-10 left-10 w-2 h-2 bg-white rounded-full opacity-0 group-active:animate-ping"></span>
+              <span className="absolute bottom-12 right-12 w-2 h-2 bg-white rounded-full opacity-0 group-active:animate-ping delay-100"></span>
+              <span className="absolute top-1/2 left-6 w-1.5 h-1.5 bg-white rounded-full opacity-0 group-active:animate-ping delay-200"></span>
+            </div>
+          </button>
 
-      {/* Ripple Wave */}
-      <span className="
-        absolute inset-0 rounded-full border border-white/40
-        scale-0 opacity-0
-        group-active:scale-[1.6] group-active:opacity-100
-        transition-all duration-700
-      " />
-
-      {/* Inner Glow */}
-      <div className="absolute inset-0 rounded-full bg-white/10 blur-xl opacity-50" />
-    </div>
-
-    {/* Floating Energy Particles on Tap */}
-    <div className="pointer-events-none absolute inset-0">
-      <span className="absolute top-10 left-10 w-2 h-2 bg-white rounded-full opacity-0 group-active:animate-ping"></span>
-      <span className="absolute bottom-12 right-12 w-2 h-2 bg-white rounded-full opacity-0 group-active:animate-ping delay-100"></span>
-      <span className="absolute top-1/2 left-6 w-1.5 h-1.5 bg-white rounded-full opacity-0 group-active:animate-ping delay-200"></span>
-    </div>
-
-  </button>
-
-  <p className="mt-10 text-[#FFD700] text-sm opacity-70 tracking-widest uppercase">
-    Tap to Chant
-  </p>
-
-  {/* Animations */}
-  <style jsx>{`
-    @keyframes spinSlow {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .animate-spin-slow {
-      animation: spinSlow 18s linear infinite;
-    }
-  `}</style>
-
-</div>
-
+          <p className="mt-10 text-[#FFD700] text-sm opacity-70 tracking-widest uppercase">
+            {currentBead + 1}/{TOTAL_BEADS} • Tap to Chant
+          </p>
+        </div>
       )}
 
       {/* MALA VIEW MODE */}
       {viewMode === "mala" && (
         <div
           ref={containerRef}
-          className="h-screen w-full overflow-hidden cursor-ns-resize"
-          style={{ touchAction: "none" }}
+          className="h-screen w-full overflow-y-auto cursor-ns-resize"
+          style={{ touchAction: "pan-y" }}
         >
           <div className="pt-[45vh] pb-[50vh] flex flex-col items-center">
             {Array.from({ length: TOTAL_BEADS }).map((_, index) => (
-              <div key={index} style={{ height: 64 }}>
+              <div
+                key={index}
+                style={{ height: 64 }}
+                className="flex items-center justify-center"
+              >
                 <RudrakshaComponent
                   index={index}
                   isActive={index === currentBead}
@@ -513,16 +506,19 @@ const strokeDashoffset = circumference - progress * circumference;
 
       {/* Completion Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center">
-          <div className="bg-[#1a1612] border border-[#FFD700] p-10 rounded-3xl text-center">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-lg flex items-center justify-center z-[1000]">
+          <div className="bg-[#1a1612] border border-[#FFD700] p-10 rounded-3xl text-center max-w-[320px] w-[90%]">
             <Lottie
               animationData={shivLingAnimation2}
               loop
               className="w-32 h-32 mx-auto"
             />
             <h2 className="text-[#FFD700] text-xl my-4">{t.modal.title}</h2>
+            <p className="text-white/70 mb-6">
+              {t.modal.desc.replace("{count}", malaCount)}
+            </p>
             <button
-              className="border border-[#FFD700] text-[#FFD700] px-8 py-2 rounded-full"
+              className="border border-[#FFD700] text-[#FFD700] px-8 py-2 rounded-full hover:bg-[#FFD700] hover:text-black transition-colors"
               onClick={() => setShowModal(false)}
             >
               {t.modal.btn}
@@ -534,16 +530,29 @@ const strokeDashoffset = circumference - progress * circumference;
       <style jsx>{`
         @keyframes floatUp {
           0% {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
             opacity: 0;
           }
           20% {
             opacity: 1;
           }
           100% {
-            transform: translateY(-300px);
+            transform: translateY(-300px) scale(1.5);
             opacity: 0;
           }
+        }
+
+        @keyframes spinSlow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .animate-spin-slow {
+          animation: spinSlow 18s linear infinite;
         }
       `}</style>
     </div>
